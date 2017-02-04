@@ -11,46 +11,76 @@
 #import "iTunesTabAdapter.h"
 #import "SpotifyTabAdapter.h"
 #import "VOXTabAdapter.h"
+#import "VLCTabAdapter.h"
+#import "DowncastTabAdapter.h"
 
 @implementation NativeAppTabRegistry
 
-- (id)initWithUserDefaultsKey:(NSString *)defaultsKey{
-    
-    self = [super init];
-    if (self) {
-        
-        _availableAppClasses = [NSMutableArray array];
-        _availableCache = [NSMutableDictionary dictionary];
-        
-        NSArray *defaultApps = [NativeAppTabRegistry defaultNativeAppClasses];
-        NSDictionary *defaults = [[NSUserDefaults standardUserDefaults] dictionaryForKey:defaultsKey];
-        
-        for (Class appClass in defaultApps) {
-            NSString *name = [appClass displayName];
-            if (name) {
-                NSNumber *enabled = [defaults objectForKey:name];
-                if (!enabled || [enabled boolValue]) {
-                    [self enableNativeAppClass:appClass];
-                }
-            }
-        }
 
+static NativeAppTabRegistry *singletonNativeAppTabRegistry;
+
+/////////////////////////////////////////////////////////////////////
+#pragma mark Initialize
+
++ (NativeAppTabRegistry *)singleton{
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+
+        singletonNativeAppTabRegistry = [NativeAppTabRegistry alloc];
+        singletonNativeAppTabRegistry = [singletonNativeAppTabRegistry init];
+    });
+
+    return singletonNativeAppTabRegistry;
+
+}
+
+- (id)init{
+
+    if (singletonNativeAppTabRegistry != self) {
+        return nil;
     }
+    self = [super init];
+
     return self;
 }
+
+- (void)setUserDefaultsKey:(NSString *)defaultsKey{
+
+    _availableAppClasses = [NSMutableArray array];
+    _availableCache = [NSMutableDictionary dictionary];
+
+    NSArray *defaultApps = [NativeAppTabRegistry defaultNativeAppClasses];
+    NSDictionary *defaults = [[NSUserDefaults standardUserDefaults] dictionaryForKey:defaultsKey];
+
+    for (Class appClass in defaultApps) {
+        NSString *name = [appClass displayName];
+        if (name) {
+            NSNumber *enabled = [defaults objectForKey:name];
+            if (!enabled || [enabled boolValue]) {
+                [self enableNativeAppClass:appClass];
+            }
+        }
+    }
+
+}
+
+/////////////////////////////////////////////////////////////////////
+#pragma mark Methods
 
 + (NSArray *)defaultNativeAppClasses {
 
     return @[
-
         [iTunesTabAdapter class],
         [SpotifyTabAdapter class],
-        [VOXTabAdapter class]
+        [VLCTabAdapter class],
+        [VOXTabAdapter class],
+        [DowncastTabAdapter class]
     ];
 }
 
 - (NSArray *)enabledNativeAppClasses{
-    
+
     @synchronized(self){
     return [_availableAppClasses copy];
     }
@@ -64,18 +94,18 @@
 }
 
 - (void)enableNativeAppClass:(Class)appClass{
-    
+
     @synchronized(self){
-        
+
         [_availableAppClasses addObject:appClass];
         _availableCache[[appClass bundleId]] = appClass;
     }
 }
 
 - (void)disableNativeAppClass:(Class)appClass{
-    
+
     @synchronized(self){
-        
+
         [_availableAppClasses removeObject:appClass];
         [_availableCache removeObjectForKey:[appClass bundleId]];
     }

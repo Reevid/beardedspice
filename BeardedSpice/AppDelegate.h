@@ -8,23 +8,25 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "SPMediaKeyTap.h"
-
 #import "Chrome.h"
 #import "Safari.h"
 #import "iTunes.h"
 #import "TabAdapter.h"
 #import "MediaStrategyRegistry.h"
 #import "NativeAppTabRegistry.h"
-#import "BSHeadphoneUnplugListener.h"
+#import "BeardedSpiceHostAppProtocol.h"
+
+#import "BSMediaStrategy.h"
+
+#define APPDELEGATE     (AppDelegate *)([[NSApplication sharedApplication] delegate])
 
 @class runningSBApplication;
+@class BSStrategyVersionManager;
+@class BSActiveTab;
 
 extern BOOL accessibilityApiEnabled;
 
-#import "MediaStrategy.h"
-
-@interface AppDelegate : NSObject <NSApplicationDelegate, NSUserNotificationCenterDelegate, BSHeadphoneUnplugListenerProtocol, NSMenuDelegate> {
+@interface AppDelegate : NSObject <NSApplicationDelegate, NSUserNotificationCenterDelegate, NSMenuDelegate, BeardedSpiceHostAppProtocol> {
 
     IBOutlet NSMenu *statusMenu;
     NSUInteger  statusMenuCount;
@@ -34,39 +36,41 @@ extern BOOL accessibilityApiEnabled;
     runningSBApplication *canaryApp;
     runningSBApplication *yandexBrowserApp;
     runningSBApplication *chromiumApp;
+    runningSBApplication *vivaldiApp;
 
     runningSBApplication *safariApp;
     NSMutableSet *SafariTabKeys;
 
     NSMutableArray *nativeApps;
 
-    SPMediaKeyTap *keyTap;
-
-    TabAdapter *activeTab;
-    NSString *activeTabKey;
-    
     NSMutableArray *menuItems;
     NSMutableArray *playingTabs;
-    
-    MediaStrategyRegistry *mediaStrategyRegistry;
+
     NativeAppTabRegistry *nativeAppRegistry;
 
     NSWindowController *_preferencesWindowController;
-    
+
     NSMutableSet    *openedWindows;
-    
+
     dispatch_queue_t workingQueue;
-    dispatch_queue_t notificationQueue;
-    
-    NSMutableArray *_mikeys;
-    NSMutableArray *_appleRemotes;
-    BSHeadphoneUnplugListener *_hpuListener;
-    
+
+    NSXPCConnection *_connectionToService;
+
+    BOOL _AXAPIEnabled;
 }
 
+@property (nonatomic, strong) BSActiveTab *activeApp;
 @property (nonatomic, readonly) NSWindowController *preferencesWindowController;
+@property (nonatomic, strong) BSStrategyVersionManager *versionManager;
 
+- (IBAction)checkForUpdates:(id)sender;
 - (IBAction)openPreferences:(id)sender;
 - (void)showNotification;
+
+/////////////////////////////////////////////////////////////////////
+#pragma mark Windows control methods
+
+-(void)windowWillBeVisible:(id)window;
+-(void)removeWindow:(id)obj;
 
 @end

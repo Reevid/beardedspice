@@ -7,6 +7,7 @@
 //
 
 #import "TabAdapter.h"
+#import "BSTrack.h"
 #import "NSString+Utils.h"
 #import "runningSBApplication.h"
 
@@ -18,79 +19,86 @@
 @implementation TabAdapter
 
 - (id)executeJavascript:(NSString *)javascript{
-    
+
     return nil;
 }
 
 -(NSString *) title{
-    
+
     return nil;
 }
 -(NSString *) URL{
-    
+
     return nil;
 }
 
 -(NSString *) key{
-    
+
     return [self assignKey];
 }
 
 - (void)activateTab{
-    
+
     @autoreleasepool {
-        
+
         if (![self.application frontmost]) {
-            
+
             [self.application activate];
             _wasActivated = YES;
         }
-        else
+        else{
             _wasActivated = NO;
+        }
     }
 }
 
+- (BOOL)isActivated{
+    return (_wasActivated && [self.application frontmost]);
+}
+
 - (void)toggleTab{
-    
-    if ([self.application frontmost]){
-        if (_wasActivated) {
-            
-            [self.application hide];
-            _wasActivated = NO;
-        }
+
+    if ([self isActivated]){
+        [self.application hide];
+        _wasActivated = NO;
     }
     else
         [self activateTab];
 }
 
 - (BOOL)frontmost{
-    
+
     return self.application.frontmost;
 }
 
 
 - (instancetype)copyStateFrom:(TabAdapter *)tab{
-    
+
     if ([tab isKindOfClass:[self class]]) {
-        
+
         _wasActivated = tab->_wasActivated;
     }
-    
+
     return self;
 }
 
 -(BOOL) isEqual:(__autoreleasing id)otherTab{
 
     @autoreleasepool {
-        
+
         if (otherTab == nil || ![otherTab isKindOfClass:[self class]]) return NO;
-        
+
         return [[self key] isEqualToString:[otherTab key]];
     }
 }
 
+- (NSUInteger)hash{
+
+    return [[self key] hash];
+}
+
 - (BOOL)check{
-    
+
     NSNumber *result = [self executeJavascript:CHECK_EXEC];
     return [result boolValue];
 }
@@ -101,11 +109,11 @@
 
 - (NSString *)assignKey{
     @autoreleasepool {
-        
+
         NSString *_key = [self executeJavascript:GET_KEY_FORMAT];
-        
+
         if ([NSString isNullOrEmpty:_key]){
-            
+
             _key = [NSString stringWithFormat:@"K:%@", [[NSUUID UUID] UUIDString]];
             _key = [NSString stringWithFormat:SET_KEY_FORMAT GET_KEY_FORMAT, _key];
             _key = [self executeJavascript:_key];

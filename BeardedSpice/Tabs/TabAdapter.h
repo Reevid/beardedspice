@@ -6,12 +6,10 @@
 //  Copyright (c) 2015 Tyler Rhodes / Jose Falcon. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-
 @class runningSBApplication;
 
-@interface TabAdapter : NSObject{
-    
+@interface TabAdapter : NSObject {
+
     BOOL _wasActivated;
 }
 
@@ -22,6 +20,7 @@
 - (BOOL)check;
 
 - (void)activateTab;
+- (BOOL)isActivated;
 - (void)toggleTab;
 - (BOOL)frontmost;
 
@@ -29,9 +28,9 @@
 
 /**
     Copying of the variables, which reflect state of the object.
- 
+
     @param tab Object from which performed copying.
- 
+
     @return Returns self.
  */
 - (instancetype)copyStateFrom:(TabAdapter *)tab;
